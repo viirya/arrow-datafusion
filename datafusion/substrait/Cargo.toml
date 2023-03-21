@@ -38,4 +38,4 @@ substrait = "0.5"
 tokio = "1.17"
 
 [build-dependencies]
-prost-build = { version = "0.9" }
+prost-build = { version = "0.11" }
