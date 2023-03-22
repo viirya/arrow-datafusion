@@ -94,6 +94,7 @@ impl ExpressionVisitor for ApplicabilityVisitor<'_> {
             | Expr::IsNotUnknown(_)
             | Expr::Negative(_)
             | Expr::Cast { .. }
+            | Expr::PromotePrecision { .. }
             | Expr::TryCast { .. }
             | Expr::BinaryExpr { .. }
             | Expr::Between { .. }

@@ -35,9 +35,28 @@ pub fn binary_operator_data_type(
     op: &Operator,
     rhs_type: &DataType,
 ) -> Result<DataType> {
+    println!(
+        "binary_operator_data_type, lhs: {}, rhs: {}",
+        lhs_type, rhs_type
+    );
+    let coerced_type = coerce_types(lhs_type, op, rhs_type)?;
     // validate that it is possible to perform the operation on incoming types.
     // (or the return datatype cannot be inferred)
-    let result_type = coerce_types(lhs_type, op, rhs_type)?;
+    let result_type = if !matches!(coerced_type, DataType::Decimal128(_, _)) {
+        coerced_type
+    } else {
+        let d = match op {
+            // For Plus and Minus, the result type is the same as the input type which is already promoted
+            Operator::Plus | Operator::Minus => coerced_type,
+            Operator::Divide | Operator::Multiply | Operator::Modulo => {
+                decimal_op_mathematics_type(op, &coerced_type, &coerced_type)
+                    .unwrap_or(coerced_type)
+            }
+            _ => coerced_type,
+        };
+        println!("decimal_op_mathematics_type: {}", d);
+        d
+    };
 
     match op {
         // operators that return a boolean
@@ -90,6 +109,7 @@ pub fn coerce_types(
     op: &Operator,
     rhs_type: &DataType,
 ) -> Result<DataType> {
+    println!("coerce_types");
     // This result MUST be compatible with `binary_coerce`
     let result = match op {
         Operator::BitwiseAnd
@@ -388,6 +408,8 @@ fn mathematics_numerical_coercion(
     if lhs_type == rhs_type
         && !(matches!(lhs_type, DataType::Dictionary(_, _))
             || matches!(rhs_type, DataType::Dictionary(_, _)))
+        // For decimal, we always need to coerce/promote the decimal types.
+        && !matches!(lhs_type, DataType::Decimal128(_, _))
     {
         return Some(lhs_type.clone());
     }
@@ -458,7 +480,36 @@ fn create_decimal_type(precision: u8, scale: i8) -> DataType {
     )
 }
 
+/// Returns the promotion type of applying mathematics operations on decimal types.
+/// Two sides of the mathematics operation will be promoted to the same type.
 fn coercion_decimal_mathematics_type(
+    mathematics_op: &Operator,
+    left_decimal_type: &DataType,
+    right_decimal_type: &DataType,
+) -> Option<DataType> {
+    use arrow::datatypes::DataType::*;
+    match (left_decimal_type, right_decimal_type) {
+        // The promotion rule from spark
+        // https://github.com/apache/spark/blob/c20af535803a7250fef047c2bf0fe30be242369d/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/analysis/DecimalPrecision.scala#L35
+        (Decimal128(_, _), Decimal128(_, _)) => match mathematics_op {
+            Operator::Plus | Operator::Minus => decimal_op_mathematics_type(
+                mathematics_op,
+                left_decimal_type,
+                right_decimal_type,
+            ),
+            Operator::Multiply | Operator::Divide | Operator::Modulo => {
+                get_wider_decimal_type(left_decimal_type, right_decimal_type)
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// Returns the output type of applying mathematics operations on decimal types.
+/// The rule is from spark. Note that this is different to the promoted type applied
+/// to two sides of the arithmetic operation.
+fn decimal_op_mathematics_type(
     mathematics_op: &Operator,
     left_decimal_type: &DataType,
     right_decimal_type: &DataType,
@@ -475,14 +526,22 @@ fn coercion_decimal_mathematics_type(
                     // max(s1, s2) + max(p1-s1, p2-s2) + 1
                     let result_precision =
                         result_scale + (*p1 as i8 - *s1).max(*p2 as i8 - *s2) + 1;
-                    Some(create_decimal_type(result_precision as u8, result_scale))
+                    let r =
+                        Some(create_decimal_type(result_precision as u8, result_scale));
+                    println!(
+                        "p1: {}, s1: {}, p2: {}, s2: {}, r: {:?}",
+                        *p1, *s1, *p2, *s2, r
+                    );
+                    r
                 }
                 Operator::Multiply => {
                     // s1 + s2
                     let result_scale = *s1 + *s2;
                     // p1 + p2 + 1
                     let result_precision = *p1 + *p2 + 1;
-                    Some(create_decimal_type(result_precision, result_scale))
+                    let r = Some(create_decimal_type(result_precision, result_scale));
+                    println!("s1: {}, s2: {}, r: {:?}", *s1, *s2, r);
+                    r
                 }
                 Operator::Divide => {
                     // max(6, s1 + p2 + 1)

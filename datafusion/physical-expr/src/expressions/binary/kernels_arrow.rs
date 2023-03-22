@@ -258,14 +258,24 @@ pub(crate) fn is_not_distinct_from_decimal(
         .collect())
 }
 
-pub(crate) fn add_dyn_decimal(left: &dyn Array, right: &dyn Array) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
+pub(crate) fn add_dyn_decimal(
+    left: &dyn Array,
+    right: &dyn Array,
+    result_type: &Option<DataType>,
+) -> Result<ArrayRef> {
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = add_dyn(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }
 
-pub(crate) fn add_decimal_dyn_scalar(left: &dyn Array, right: i128) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
+pub(crate) fn add_decimal_dyn_scalar(
+    left: &dyn Array,
+    right: i128,
+    result_type: &Option<DataType>,
+) -> Result<ArrayRef> {
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
 
     let array = add_scalar_dyn::<Decimal128Type>(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
@@ -274,15 +284,21 @@ pub(crate) fn add_decimal_dyn_scalar(left: &dyn Array, right: i128) -> Result<Ar
 pub(crate) fn subtract_decimal_dyn_scalar(
     left: &dyn Array,
     right: i128,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
 
     let array = subtract_scalar_dyn::<Decimal128Type>(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }
 
 fn get_precision_scale(left: &dyn Array) -> Result<(u8, i8)> {
-    match left.data_type() {
+    get_precision_scale_from_datatype(left.data_type())
+}
+
+fn get_precision_scale_from_datatype(data_type: &DataType) -> Result<(u8, i8)> {
+    match data_type {
         DataType::Decimal128(precision, scale) => Ok((*precision, *scale)),
         DataType::Dictionary(_, value_type) => match value_type.as_ref() {
             DataType::Decimal128(precision, scale) => Ok((*precision, *scale)),
@@ -334,35 +350,32 @@ fn decimal_array_with_precision_scale(
 pub(crate) fn multiply_decimal_dyn_scalar(
     left: &dyn Array,
     right: i128,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
-
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = multiply_scalar_dyn::<Decimal128Type>(left, right)?;
-
-    let divide = 10_i128.pow(scale as u32);
-    let array = divide_scalar_dyn::<Decimal128Type>(&array, divide)?;
-
     decimal_array_with_precision_scale(array, precision, scale)
 }
 
 pub(crate) fn divide_decimal_dyn_scalar(
     left: &dyn Array,
     right: i128,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
-
-    let mul = 10_i128.pow(scale as u32);
-    let array = multiply_scalar_dyn::<Decimal128Type>(left, mul)?;
-
-    let array = divide_scalar_dyn::<Decimal128Type>(&array, right)?;
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
+    let array = divide_scalar_dyn::<Decimal128Type>(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }
 
 pub(crate) fn subtract_dyn_decimal(
     left: &dyn Array,
     right: &dyn Array,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = subtract_dyn(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }
@@ -370,36 +383,32 @@ pub(crate) fn subtract_dyn_decimal(
 pub(crate) fn multiply_dyn_decimal(
     left: &dyn Array,
     right: &dyn Array,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (left_precision, left_scale) = get_precision_scale(left)?;
-    let (right_precision, right_scale) = get_precision_scale(right)?;
-    let product_precision = min(
-        left_precision + right_precision + 1,
-        DECIMAL128_MAX_PRECISION,
-    );
-    let product_scale = min(left_scale + right_scale, DECIMAL128_MAX_SCALE);
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = multiply_dyn(left, right)?;
-    decimal_array_with_precision_scale(array, product_precision, product_scale)
+    decimal_array_with_precision_scale(array, precision, scale)
 }
 
 pub(crate) fn divide_dyn_opt_decimal(
     left: &dyn Array,
     right: &dyn Array,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
-
-    let mul = 10_i128.pow(scale as u32);
-    let array = multiply_scalar_dyn::<Decimal128Type>(left, mul)?;
-    let array = decimal_array_with_precision_scale(array, precision, scale)?;
-    let array = divide_dyn_opt(&array, right)?;
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
+    let array = divide_dyn_opt(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }
 
 pub(crate) fn modulus_dyn_decimal(
     left: &dyn Array,
     right: &dyn Array,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = modulus_dyn(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }
@@ -407,9 +416,10 @@ pub(crate) fn modulus_dyn_decimal(
 pub(crate) fn modulus_decimal_dyn_scalar(
     left: &dyn Array,
     right: i128,
+    result_type: &Option<DataType>,
 ) -> Result<ArrayRef> {
-    let (precision, scale) = get_precision_scale(left)?;
-
+    let (precision, scale) =
+        get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = modulus_scalar_dyn::<Decimal128Type>(left, right)?;
     decimal_array_with_precision_scale(array, precision, scale)
 }

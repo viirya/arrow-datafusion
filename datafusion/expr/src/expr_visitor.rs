@@ -17,7 +17,7 @@
 
 //! Expression visitor
 
-use crate::expr::{AggregateFunction, Cast, Sort, WindowFunction};
+use crate::expr::{AggregateFunction, Cast, PromotePrecision, Sort, WindowFunction};
 use crate::{
     expr::{BinaryExpr, GroupingSet, TryCast},
     Between, Expr, GetIndexedField, Like,
@@ -116,6 +116,7 @@ impl ExprVisitable for Expr {
             | Expr::IsNull(expr)
             | Expr::Negative(expr)
             | Expr::Cast(Cast { expr, .. })
+            | Expr::PromotePrecision(PromotePrecision { expr, .. })
             | Expr::TryCast(TryCast { expr, .. })
             | Expr::Sort(Sort { expr, .. })
             | Expr::InSubquery { expr, .. } => expr.accept(visitor),

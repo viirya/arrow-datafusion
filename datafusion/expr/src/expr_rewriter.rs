@@ -19,7 +19,7 @@
 
 use crate::expr::{
     AggregateFunction, Between, BinaryExpr, Case, Cast, GetIndexedField, GroupingSet,
-    Like, Sort, TryCast, WindowFunction,
+    Like, PromotePrecision, Sort, TryCast, WindowFunction,
 };
 use crate::logical_plan::Projection;
 use crate::{Expr, ExprSchemable, LogicalPlan, LogicalPlanBuilder};
@@ -135,13 +135,17 @@ impl ExprRewritable for Expr {
             Expr::ScalarSubquery(_) => self.clone(),
             Expr::ScalarVariable(ty, names) => Expr::ScalarVariable(ty, names),
             Expr::Literal(value) => Expr::Literal(value),
-            Expr::BinaryExpr(BinaryExpr { left, op, right }) => {
-                Expr::BinaryExpr(BinaryExpr::new(
-                    rewrite_boxed(left, rewriter)?,
-                    op,
-                    rewrite_boxed(right, rewriter)?,
-                ))
-            }
+            Expr::BinaryExpr(BinaryExpr {
+                left,
+                op,
+                right,
+                data_type,
+            }) => Expr::BinaryExpr(BinaryExpr::new_with_data_type(
+                rewrite_boxed(left, rewriter)?,
+                op,
+                rewrite_boxed(right, rewriter)?,
+                data_type,
+            )),
             Expr::Like(Like {
                 negated,
                 expr,
@@ -218,6 +222,9 @@ impl ExprRewritable for Expr {
             Expr::Cast(Cast { expr, data_type }) => {
                 Expr::Cast(Cast::new(rewrite_boxed(expr, rewriter)?, data_type))
             }
+            Expr::PromotePrecision(PromotePrecision { expr }) => Expr::PromotePrecision(
+                PromotePrecision::new(rewrite_boxed(expr, rewriter)?),
+            ),
             Expr::TryCast(TryCast { expr, data_type }) => {
                 Expr::TryCast(TryCast::new(rewrite_boxed(expr, rewriter)?, data_type))
             }

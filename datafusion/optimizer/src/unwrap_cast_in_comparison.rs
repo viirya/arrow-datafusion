@@ -30,7 +30,8 @@ use datafusion_expr::expr::{BinaryExpr, Cast, TryCast};
 use datafusion_expr::expr_rewriter::{ExprRewriter, RewriteRecursion};
 use datafusion_expr::utils::from_plan;
 use datafusion_expr::{
-    binary_expr, in_list, lit, Expr, ExprSchemable, LogicalPlan, Operator,
+    binary_expr, binary_expr_with_data_type, in_list, lit, Expr, ExprSchemable,
+    LogicalPlan, Operator,
 };
 use std::cmp::Ordering;
 use std::sync::Arc;
@@ -132,7 +133,12 @@ impl ExprRewriter for UnwrapCastExprRewriter {
             // For case:
             // try_cast/cast(expr as data_type) op literal
             // literal op try_cast/cast(expr as data_type)
-            Expr::BinaryExpr(BinaryExpr { left, op, right }) => {
+            Expr::BinaryExpr(BinaryExpr {
+                left,
+                op,
+                right,
+                data_type,
+            }) => {
                 let left = left.as_ref().clone();
                 let right = right.as_ref().clone();
                 let left_type = left.get_type(&self.schema)?;
@@ -155,10 +161,11 @@ impl ExprRewriter for UnwrapCastExprRewriter {
                                 try_cast_literal_to_type(left_lit_value, &expr_type)?;
                             if let Some(value) = casted_scalar_value {
                                 // unwrap the cast/try_cast for the right expr
-                                return Ok(binary_expr(
+                                return Ok(binary_expr_with_data_type(
                                     lit(value),
                                     *op,
                                     expr.as_ref().clone(),
+                                    data_type.clone(),
                                 ));
                             }
                         }
@@ -174,10 +181,11 @@ impl ExprRewriter for UnwrapCastExprRewriter {
                                 try_cast_literal_to_type(right_lit_value, &expr_type)?;
                             if let Some(value) = casted_scalar_value {
                                 // unwrap the cast/try_cast for the left expr
-                                return Ok(binary_expr(
+                                return Ok(binary_expr_with_data_type(
                                     expr.as_ref().clone(),
                                     *op,
                                     lit(value),
+                                    data_type.clone(),
                                 ));
                             }
                         }
@@ -187,7 +195,12 @@ impl ExprRewriter for UnwrapCastExprRewriter {
                     };
                 }
                 // return the new binary op
-                Ok(binary_expr(left, *op, right))
+                Ok(binary_expr_with_data_type(
+                    left,
+                    *op,
+                    right,
+                    data_type.clone(),
+                ))
             }
             // For case:
             // try_cast/cast(expr as left_type) in (expr1,expr2,expr3)
