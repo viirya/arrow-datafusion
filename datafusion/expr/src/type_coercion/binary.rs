@@ -45,11 +45,21 @@ pub fn binary_operator_data_type(
     let result_type = if !matches!(coerced_type, DataType::Decimal128(_, _)) {
         coerced_type
     } else {
+        let lhs_type = if matches!(lhs_type, DataType::Decimal128(_, _)) {
+            lhs_type
+        } else {
+            &coerced_type
+        };
+        let rhs_type = if matches!(rhs_type, DataType::Decimal128(_, _)) {
+            rhs_type
+        } else {
+            &coerced_type
+        };
         let d = match op {
             // For Plus and Minus, the result type is the same as the input type which is already promoted
             Operator::Plus | Operator::Minus => coerced_type,
             Operator::Divide | Operator::Multiply | Operator::Modulo => {
-                decimal_op_mathematics_type(op, &coerced_type, &coerced_type)
+                decimal_op_mathematics_type(op, lhs_type, rhs_type)
                     .unwrap_or(coerced_type)
             }
             _ => coerced_type,
@@ -548,6 +558,10 @@ fn decimal_op_mathematics_type(
                     let result_scale = 6.max(*s1 + *p2 as i8 + 1);
                     // p1 - s1 + s2 + max(6, s1 + p2 + 1)
                     let result_precision = result_scale + *p1 as i8 - *s1 + *s2;
+                    println!(
+                        "divide result_precision: {}, result_scale: {}, s1: {}, s2: {}, p1: {}, p2: {}",
+                        result_precision, result_scale, *s1, *s2, *p1, *p2
+                    );
                     Some(create_decimal_type(result_precision as u8, result_scale))
                 }
                 Operator::Modulo => {

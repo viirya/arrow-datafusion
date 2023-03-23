@@ -399,6 +399,7 @@ pub(crate) fn divide_dyn_opt_decimal(
     let (precision, scale) =
         get_precision_scale_from_datatype(&result_type.clone().unwrap())?;
     let array = divide_dyn_opt(left, right)?;
+    println!("left: {:?}, right: {:?}, result: {:?}", left, right, array);
     decimal_array_with_precision_scale(array, precision, scale)
 }
 

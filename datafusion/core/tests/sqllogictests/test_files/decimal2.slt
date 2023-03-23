@@ -28,29 +28,28 @@ WITH HEADER ROW
 LOCATION 'tests/data/decimal_data.csv';
 
 query T
-select arrow_typeof(c1+1) from decimal_simple limit 1;
+select arrow_typeof(c1/cast(0.00001 as decimal(5,5))) from decimal_simple limit 1;
 ----
-Decimal128(27, 6)
+Decimal128(21, 12)
 
 query R
-select c1*20 from decimal_simple;
+select c1/cast(0.00001 as decimal(5,5)) from decimal_simple;
 ----
-0.0002
-0.0004
-0.0004
-0.0006
-0.0006
-0.0006
-0.0008
-0.0008
-0.0008
-0.0008
-0.001
-0.001
-0.001
-0.001
-0.001
-
+0.000000000001
+0.000000000002
+0.000000000002
+0.000000000003
+0.000000000003
+0.000000000003
+0.000000000004
+0.000000000004
+0.000000000004
+0.000000000004
+0.000000000005
+0.000000000005
+0.000000000005
+0.000000000005
+0.000000000005
 
 # array decimal(10,6) + array decimal(12,7) => decimal(13,7)
 query T
