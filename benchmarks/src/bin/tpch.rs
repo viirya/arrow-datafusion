@@ -1056,7 +1056,7 @@ mod ci {
         // run the query to compute actual results of the query
         let opt = DataFusionBenchmarkOpt {
             query: Some(n),
-            debug: false,
+            debug: true,
             iterations: 1,
             partitions: 2,
             batch_size: 8192,

@@ -357,6 +357,7 @@ pub(crate) fn multiply_decimal_dyn_scalar(
     )?;
     let (_, op_scale) = get_precision_scale(&op_type)?;
 
+    println!("left: {:?}, right: {:?}", left, right);
     let array = multiply_scalar_dyn::<Decimal128Type>(left, right)?;
 
     if op_scale > scale {

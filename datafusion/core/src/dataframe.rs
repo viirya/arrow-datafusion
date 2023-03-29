@@ -660,6 +660,10 @@ impl DataFrame {
     /// ```
     pub async fn collect(self) -> Result<Vec<RecordBatch>> {
         let task_ctx = Arc::new(self.task_ctx());
+        println!(
+            "optimized plan: {:?}",
+            self.session_state.optimize(&self.plan)
+        );
         let plan = self.create_physical_plan().await?;
         collect(plan, task_ctx).await
     }

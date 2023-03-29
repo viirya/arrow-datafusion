@@ -496,6 +496,7 @@ pub async fn transform_actual_result(
                 .map_err(|e| e.into())
         })
         .collect::<Result<Vec<_>>>()?;
+    println!("result: {:#?}", result);
     let table = Arc::new(MemTable::try_new(result_schema.clone(), vec![result])?);
     let mut df = ctx.read_table(table)?
         .select(
@@ -510,6 +511,7 @@ pub async fn transform_actual_result(
                             // this can be simplified to remove the mul and div when
                             // https://github.com/apache/arrow-datafusion/issues/2420 is completed
                             // cast it back to an over-sized Decimal with 2 precision when done rounding
+                            println!("field: {:?}", field.name());
                             let round = Box::new(Expr::ScalarFunction {
                                 fun: datafusion::logical_expr::BuiltinScalarFunction::Round,
                                 args: vec![col(Field::name(field)).mul(lit(100))],
