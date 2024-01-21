@@ -794,6 +794,7 @@ impl SMJStream {
                         self.streamed_state = StreamedState::Exhausted;
                     }
                     Poll::Ready(Some(batch)) => {
+                        println!("stream batch: {:?}", batch);
                         if batch.num_rows() > 0 {
                             self.freeze_streamed()?;
                             self.join_metrics.input_batches.add(1);
@@ -848,9 +849,12 @@ impl SMJStream {
                     }
                     Poll::Ready(None) => {
                         self.buffered_state = BufferedState::Exhausted;
+                        println!("buffer first batch: None");
                         return Poll::Ready(None);
                     }
                     Poll::Ready(Some(batch)) => {
+                        println!("buffer first batch: {:?}", batch);
+
                         self.join_metrics.input_batches.add(1);
                         self.join_metrics.input_rows.add(batch.num_rows());
                         if batch.num_rows() > 0 {
@@ -891,9 +895,12 @@ impl SMJStream {
                                 return Poll::Pending;
                             }
                             Poll::Ready(None) => {
+                                println!("buffer rest batch: None");
                                 self.buffered_state = BufferedState::Ready;
                             }
                             Poll::Ready(Some(batch)) => {
+                                println!("buffer rest batch: {:?}", batch);
+
                                 self.join_metrics.input_batches.add(1);
                                 self.join_metrics.input_rows.add(batch.num_rows());
                                 if batch.num_rows() > 0 {
