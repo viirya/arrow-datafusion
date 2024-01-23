@@ -670,6 +670,8 @@ impl Stream for SMJStream {
                     };
                 }
                 SMJState::Polling => {
+                    println!("streamed state: {:?}", self.streamed_state);
+                    println!("buffered state: {:?}", self.buffered_state);
                     if ![StreamedState::Exhausted, StreamedState::Ready]
                         .contains(&self.streamed_state)
                     {
@@ -774,6 +776,7 @@ impl SMJStream {
 
     /// Poll next streamed row
     fn poll_streamed_row(&mut self, cx: &mut Context) -> Poll<Option<Result<()>>> {
+        println!("poll_streamed_row");
         loop {
             match &self.streamed_state {
                 StreamedState::Init => {
@@ -817,10 +820,15 @@ impl SMJStream {
 
     /// Poll next buffered batches
     fn poll_buffered_batches(&mut self, cx: &mut Context) -> Poll<Option<Result<()>>> {
+        println!("poll_buffered_batches");
         loop {
             match &self.buffered_state {
                 BufferedState::Init => {
                     // pop previous buffered batches
+                    println!(
+                        "buffered batches.len(): {:?}",
+                        self.buffered_data.batches.len()
+                    );
                     while !self.buffered_data.batches.is_empty() {
                         let head_batch = self.buffered_data.head_batch();
                         if head_batch.range.end == head_batch.batch.num_rows() {
@@ -842,6 +850,7 @@ impl SMJStream {
                         tail_batch.range.end += 1;
                         self.buffered_state = BufferedState::PollingRest;
                     }
+                    println!("buffered_state: {:?}", self.buffered_state);
                 }
                 BufferedState::PollingFirst => match self.buffered.poll_next_unpin(cx)? {
                     Poll::Pending => {
