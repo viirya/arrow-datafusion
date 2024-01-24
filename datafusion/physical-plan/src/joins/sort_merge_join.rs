@@ -681,6 +681,8 @@ impl Stream for SMJStream {
                         }
                     }
 
+                    println!("after poll_streamed_row");
+
                     if ![BufferedState::Exhausted, BufferedState::Ready]
                         .contains(&self.buffered_state)
                     {
@@ -689,6 +691,9 @@ impl Stream for SMJStream {
                             Poll::Pending => return Poll::Pending,
                         }
                     }
+
+                    println!("after poll_buffered_batches");
+
                     let streamed_exhausted =
                         self.streamed_state == StreamedState::Exhausted;
                     let buffered_exhausted =
@@ -776,8 +781,8 @@ impl SMJStream {
 
     /// Poll next streamed row
     fn poll_streamed_row(&mut self, cx: &mut Context) -> Poll<Option<Result<()>>> {
-        println!("poll_streamed_row");
         loop {
+            println!("poll_streamed_row: {:?}", self.streamed_state);
             match &self.streamed_state {
                 StreamedState::Init => {
                     if self.streamed_batch.idx + 1 < self.streamed_batch.batch.num_rows()
@@ -789,25 +794,30 @@ impl SMJStream {
                         self.streamed_state = StreamedState::Polling;
                     }
                 }
-                StreamedState::Polling => match self.streamed.poll_next_unpin(cx)? {
-                    Poll::Pending => {
-                        return Poll::Pending;
-                    }
-                    Poll::Ready(None) => {
-                        self.streamed_state = StreamedState::Exhausted;
-                    }
-                    Poll::Ready(Some(batch)) => {
-                        println!("stream batch: {:?}", batch);
-                        if batch.num_rows() > 0 {
-                            self.freeze_streamed()?;
-                            self.join_metrics.input_batches.add(1);
-                            self.join_metrics.input_rows.add(batch.num_rows());
-                            self.streamed_batch =
-                                StreamedBatch::new(batch, &self.on_streamed);
-                            self.streamed_state = StreamedState::Ready;
+                StreamedState::Polling => {
+                    println!("stream poll_next_unpin");
+                    match self.streamed.poll_next_unpin(cx)? {
+                        Poll::Pending => {
+                            println!("stream batch pending");
+                            return Poll::Pending;
+                        }
+                        Poll::Ready(None) => {
+                            println!("stream batch: None");
+                            self.streamed_state = StreamedState::Exhausted;
+                        }
+                        Poll::Ready(Some(batch)) => {
+                            println!("stream batch: {:?}", batch);
+                            if batch.num_rows() > 0 {
+                                self.freeze_streamed()?;
+                                self.join_metrics.input_batches.add(1);
+                                self.join_metrics.input_rows.add(batch.num_rows());
+                                self.streamed_batch =
+                                    StreamedBatch::new(batch, &self.on_streamed);
+                                self.streamed_state = StreamedState::Ready;
+                            }
                         }
                     }
-                },
+                }
                 StreamedState::Ready => {
                     return Poll::Ready(Some(Ok(())));
                 }
@@ -820,8 +830,8 @@ impl SMJStream {
 
     /// Poll next buffered batches
     fn poll_buffered_batches(&mut self, cx: &mut Context) -> Poll<Option<Result<()>>> {
-        println!("poll_buffered_batches");
         loop {
+            println!("poll_buffered_batches: {:?}", self.buffered_state);
             match &self.buffered_state {
                 BufferedState::Init => {
                     // pop previous buffered batches
@@ -852,34 +862,41 @@ impl SMJStream {
                     }
                     println!("buffered_state: {:?}", self.buffered_state);
                 }
-                BufferedState::PollingFirst => match self.buffered.poll_next_unpin(cx)? {
-                    Poll::Pending => {
-                        return Poll::Pending;
-                    }
-                    Poll::Ready(None) => {
-                        self.buffered_state = BufferedState::Exhausted;
-                        println!("buffer first batch: None");
-                        return Poll::Ready(None);
-                    }
-                    Poll::Ready(Some(batch)) => {
-                        println!("buffer first batch: {:?}", batch);
+                BufferedState::PollingFirst => {
+                    println!("buffered first poll_next_unpin");
 
-                        self.join_metrics.input_batches.add(1);
-                        self.join_metrics.input_rows.add(batch.num_rows());
-                        if batch.num_rows() > 0 {
-                            let buffered_batch =
-                                BufferedBatch::new(batch, 0..1, &self.on_buffered);
-                            self.reservation.try_grow(buffered_batch.size_estimation)?;
-                            self.join_metrics
-                                .peak_mem_used
-                                .set_max(self.reservation.size());
+                    match self.buffered.poll_next_unpin(cx)? {
+                        Poll::Pending => {
+                            return Poll::Pending;
+                        }
+                        Poll::Ready(None) => {
+                            self.buffered_state = BufferedState::Exhausted;
+                            println!("buffer first batch: None");
+                            return Poll::Ready(None);
+                        }
+                        Poll::Ready(Some(batch)) => {
+                            println!("buffer first batch: {:?}", batch);
 
-                            self.buffered_data.batches.push_back(buffered_batch);
-                            self.buffered_state = BufferedState::PollingRest;
+                            self.join_metrics.input_batches.add(1);
+                            self.join_metrics.input_rows.add(batch.num_rows());
+                            if batch.num_rows() > 0 {
+                                let buffered_batch =
+                                    BufferedBatch::new(batch, 0..1, &self.on_buffered);
+                                self.reservation
+                                    .try_grow(buffered_batch.size_estimation)?;
+                                self.join_metrics
+                                    .peak_mem_used
+                                    .set_max(self.reservation.size());
+
+                                self.buffered_data.batches.push_back(buffered_batch);
+                                self.buffered_state = BufferedState::PollingRest;
+                            }
                         }
                     }
-                },
+                }
                 BufferedState::PollingRest => {
+                    println!("buffered (rest) poll_next_unpin");
+
                     if self.buffered_data.tail_batch().range.end
                         < self.buffered_data.tail_batch().batch.num_rows()
                     {
