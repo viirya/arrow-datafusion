@@ -784,3 +784,20 @@ SortPreservingMergeExec: [m@0 ASC NULLS LAST,t@1 ASC NULLS LAST]
 ----------------AggregateExec: mode=Partial, gby=[1 as Int64(1), t@0 as t], aggr=[]
 ------------------ProjectionExec: expr=[column1@0 as t]
 --------------------ValuesExec
+
+statement ok
+create table ts (a int);
+
+statement ok
+insert into ts values (915148800);
+
+query error DataFusion error: Schema error: No field named a\. Valid fields are minute\.
+EXPLAIN ANALYZE SELECT
+  DATE_TRUNC('minute', arrow_cast(a, 'Timestamp(Second, None)')) AS minute
+FROM
+  ts
+ORDER BY
+  DATE_TRUNC('minute', arrow_cast(a, 'Timestamp(Second, None)'));
+
+statement ok
+drop table ts;

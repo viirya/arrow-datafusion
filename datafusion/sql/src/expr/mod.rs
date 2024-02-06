@@ -447,6 +447,7 @@ impl<'a, S: ContextProvider> SqlToRel<'a, S> {
             }
 
             SQLExpr::Function(function) => {
+                println!("function: {}", schema);
                 self.sql_function_to_expr(function, schema, planner_context)
             }
 

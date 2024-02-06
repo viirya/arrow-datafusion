@@ -233,6 +233,7 @@ impl<'a, S: ContextProvider> SqlToRel<'a, S> {
 
             // Special case arrow_cast (as its type is dependent on its argument value)
             if name == ARROW_CAST_NAME {
+                println!("arrow_cast: {}", schema);
                 let args = self.function_args_to_expr(args, schema, planner_context)?;
                 return super::arrow_cast::create_arrow_cast(args, schema);
             }

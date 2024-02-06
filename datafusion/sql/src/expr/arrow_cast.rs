@@ -45,7 +45,7 @@ pub const ARROW_CAST_NAME: &str = "arrow_cast";
 /// select cast(column_x as int) ...
 /// ```
 ///
-/// Use the `arrow_cast` functiont to cast to a specfic arrow type
+/// Use the `arrow_cast` function to cast to a specific arrow type
 ///
 /// For example
 /// ```sql
