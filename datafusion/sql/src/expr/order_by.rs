@@ -65,7 +65,10 @@ impl<'a, S: ContextProvider> SqlToRel<'a, S> {
                     let field = schema.field(field_index - 1);
                     Expr::Column(field.qualified_column())
                 }
-                e => self.sql_expr_to_logical_expr(e.clone(), schema, planner_context)?,
+                e => {
+                    println!("order by e: {:?}, schema: {}", e, schema);
+                    self.sql_expr_to_logical_expr(e.clone(), schema, planner_context)?
+                }
             };
             let asc = asc.unwrap_or(true);
             expr_vec.push(Expr::Sort(Sort::new(

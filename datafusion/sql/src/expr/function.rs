@@ -116,7 +116,12 @@ impl<'a, S: ContextProvider> SqlToRel<'a, S> {
 
         // next, scalar built-in
         if let Ok(fun) = BuiltinScalarFunction::from_str(&name) {
+            println!(
+                "built-in fun: {}, args: {:?}, schema: {}",
+                name, args, schema
+            );
             let args = self.function_args_to_expr(args, schema, planner_context)?;
+            println!("new: {:?}", args);
             return Ok(Expr::ScalarFunction(ScalarFunction::new(fun, args)));
         };
 
@@ -235,6 +240,7 @@ impl<'a, S: ContextProvider> SqlToRel<'a, S> {
             if name == ARROW_CAST_NAME {
                 println!("arrow_cast: {}", schema);
                 let args = self.function_args_to_expr(args, schema, planner_context)?;
+                println!("new: {:?}", args);
                 return super::arrow_cast::create_arrow_cast(args, schema);
             }
         }

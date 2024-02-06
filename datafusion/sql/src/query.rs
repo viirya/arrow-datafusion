@@ -270,6 +270,8 @@ impl<'a, S: ContextProvider> SqlToRel<'a, S> {
             return Ok(plan);
         }
 
+        println!("order_by: {:?}", plan.schema());
+
         let order_by_rex =
             self.order_by_to_sort_expr(&order_by, plan.schema(), planner_context, true)?;
 

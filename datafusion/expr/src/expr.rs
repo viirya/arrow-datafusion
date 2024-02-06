@@ -149,6 +149,9 @@ pub enum Expr {
     /// Casts the expression to a given type and will return a null value if the expression cannot be cast.
     /// This expression is guaranteed to have a fixed type.
     TryCast(TryCast),
+    /// Casts the expression to a specific arrow type and will return a runtime error if the expression cannot be cast.
+    /// This expression is guaranteed to have a fixed type.
+    ArrowCast(ArrowCast),
     /// A sort expression, that can be used to sort values.
     Sort(Sort),
     /// Represents the call of a scalar function with a set of arguments.
@@ -464,6 +467,22 @@ pub struct Cast {
 }
 
 impl Cast {
+    /// Create a new Cast expression
+    pub fn new(expr: Box<Expr>, data_type: DataType) -> Self {
+        Self { expr, data_type }
+    }
+}
+
+/// ArrowCast expression
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct ArrowCast {
+    /// The expression being cast
+    pub expr: Box<Expr>,
+    /// The `DataType` the expression will yield
+    pub data_type: DataType,
+}
+
+impl ArrowCast {
     /// Create a new Cast expression
     pub fn new(expr: Box<Expr>, data_type: DataType) -> Self {
         Self { expr, data_type }

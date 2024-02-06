@@ -26,7 +26,8 @@ use datafusion_common::{
 };
 
 use datafusion_common::plan_err;
-use datafusion_expr::{Expr, ExprSchemable};
+use datafusion_expr::expr::{ArrowCast, ScalarFunction};
+use datafusion_expr::{BuiltinScalarFunction, Cast, Expr, ExprSchemable};
 
 pub const ARROW_CAST_NAME: &str = "arrow_cast";
 
@@ -71,7 +72,7 @@ pub fn create_arrow_cast(mut args: Vec<Expr>, schema: &DFSchema) -> Result<Expr>
     // do the actual lookup to the appropriate data type
     let data_type = parse_data_type(&data_type_string)?;
 
-    arg0.cast_to(&data_type, schema)
+    Ok(Expr::ArrowCast(ArrowCast::new(Box::new(arg0), data_type)))
 }
 
 /// Parses `str` into a `DataType`.
