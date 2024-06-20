@@ -64,22 +64,22 @@ version = "39.0.0"
 ahash = { version = "0.8", default-features = false, features = [
     "runtime-rng",
 ] }
-arrow = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", features = [
+arrow = { path = "../arrow-rs/arrow", features = [
     "prettyprint",
 ] }
-arrow-array = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", default-features = false, features = [
+arrow-array = { path = "../arrow-rs/arrow-array", default-features = false, features = [
     "chrono-tz",
 ] }
-arrow-buffer = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", default-features = false }
-arrow-flight = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", features = [
+arrow-buffer = { path = "../arrow-rs/arrow-buffer", default-features = false }
+arrow-flight = { path = "../arrow-rs/arrow-flight", features = [
     "flight-sql-experimental",
 ] }
-arrow-ipc = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", default-features = false, features = [
+arrow-ipc = { path = "../arrow-rs/arrow-ipc", default-features = false, features = [
     "lz4",
 ] }
-arrow-ord = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", default-features = false }
-arrow-schema = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", default-features = false }
-arrow-string = { git = "https://github.com/viirya/arrow-rs.git", rev = "564f3bd", default-features = false }
+arrow-ord = { path = "../arrow-rs/arrow-ord", default-features = false }
+arrow-schema = { path = "../arrow-rs/arrow-schema", default-features = false }
+arrow-string = { path = "../arrow-rs/arrow-string", default-features = false }
 async-trait = "0.1.73"
 bigdecimal = "=0.4.1"
 bytes = "1.4"
@@ -114,7 +114,7 @@ log = "^0.4"
 num_cpus = "1.13.0"
 object_store = { version = "0.10.1", default-features = false }
 parking_lot = "0.12"
-parquet = { version = "52.0.0", default-features = false, features = [
+parquet = { path = "../arrow-rs/parquet", default-features = false, features = [
     "arrow",
     "async",
     "object_store",
