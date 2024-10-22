@@ -909,6 +909,7 @@ impl ExecutionPlan for SortExec {
             ))),
             (true, None) => Ok(input),
             (false, Some(fetch)) => {
+                println!("topk exec");
                 let mut topk = TopK::try_new(
                     partition,
                     input.schema(),
@@ -924,6 +925,7 @@ impl ExecutionPlan for SortExec {
                     futures::stream::once(async move {
                         while let Some(batch) = input.next().await {
                             let batch = batch?;
+                            println!("batch: {:?}", batch);
                             topk.insert_batch(batch)?;
                         }
                         topk.emit()
@@ -932,6 +934,7 @@ impl ExecutionPlan for SortExec {
                 )))
             }
             (false, None) => {
+                println!("sort exec");
                 let mut sorter = ExternalSorter::new(
                     partition,
                     input.schema(),

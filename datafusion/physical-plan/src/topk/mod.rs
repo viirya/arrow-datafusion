@@ -178,10 +178,16 @@ impl TopK {
                 }
             }
         }
+        let id = batch_entry.id;
+        println!("TopK insert_batch: {:?}", batch_entry.batch);
         self.heap.insert_batch_entry(batch_entry);
 
         // conserve memory
         self.heap.maybe_compact()?;
+        println!(
+            "TopK inserted_batch: {:?}",
+            self.heap.store.get(id).unwrap().batch
+        );
 
         // update memory reservation
         self.reservation.try_resize(self.size())?;
@@ -209,14 +215,19 @@ impl TopK {
         let mut batches = vec![];
         loop {
             if batch.num_rows() <= batch_size {
+                println!("(1) TopK batch: {:?}", batch);
                 batches.push(Ok(batch));
                 break;
             } else {
-                batches.push(Ok(batch.slice(0, batch_size)));
+                let slice = batch.slice(0, batch_size);
+                println!("(2) TopK batch: {:?}", batch);
+                println!("(2) TopK slice: {:?}", slice);
+                batches.push(Ok(slice));
                 let remaining_length = batch.num_rows() - batch_size;
                 batch = batch.slice(batch_size, remaining_length);
             }
         }
+        println!("TopK emit: {:?}", batches);
         Ok(Box::pin(RecordBatchStreamAdapter::new(
             schema,
             futures::stream::iter(batches),
@@ -292,7 +303,9 @@ impl TopKHeap {
     /// Insert a [`RecordBatchEntry`] created by a previous call to
     /// [`Self::register_batch`] into storage.
     pub fn insert_batch_entry(&mut self, entry: RecordBatchEntry) {
-        self.store.insert(entry)
+        let id = entry.id;
+        self.store.insert(entry);
+        println!("inserted batch: {:?}", self.store.get(id).unwrap().batch);
     }
 
     /// Returns the largest value stored by the heap if there are k
@@ -382,6 +395,7 @@ impl TopKHeap {
                     .map(|k| {
                         let entry =
                             self.store.get(k.batch_id).expect("invalid stored batch id");
+                        println!("TopK emit_with_state: {:?}", entry.batch);
                         entry.batch.column(col) as &dyn Array
                     })
                     .collect();
@@ -435,6 +449,7 @@ impl TopKHeap {
             topk_row.batch_id = batch_entry.id;
             topk_row.index = i;
         }
+        println!("maybe_compact: insert_batch_entry: {:?}", batch_entry.batch);
         self.insert_batch_entry(batch_entry);
         // restore the heap
         self.inner = BinaryHeap::from(topk_rows);
