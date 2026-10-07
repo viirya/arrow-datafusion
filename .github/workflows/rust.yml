@@ -75,7 +75,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-builder
@@ -204,7 +204,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-builder
@@ -240,7 +240,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-builder
@@ -269,7 +269,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-builder
@@ -418,7 +418,7 @@ jobs:
       volumes:
         - /usr/local:/host/usr/local
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -468,7 +468,7 @@ jobs:
     if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'apache/datafusion') }}
     runs-on: ${{ vars.USE_RUNS_ON == 'true' && format('runs-on={0},family=m8a+m7a+c8a,cpu=16,image=ubuntu24-full-x64,extras=s3-cache,disk=large,tag=datafusion', github.run_id) || 'ubuntu-latest' }}
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -516,7 +516,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -548,7 +548,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -571,7 +571,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Setup Rust toolchain
         uses: ./.github/actions/setup-builder
@@ -615,7 +615,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -662,7 +662,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -686,7 +686,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -791,7 +791,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
@@ -843,7 +843,7 @@ jobs:
     container:
       image: amd64/rust
     steps:
-      - uses: runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d  # v2.3.1
+      - uses: runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3  # v2.5.0
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           submodules: true
