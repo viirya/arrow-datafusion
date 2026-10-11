@@ -16,7 +16,9 @@
 // under the License.
 
 use crate::logical_plan::producer::{SubstraitProducer, to_substrait_named_struct};
-use datafusion::common::{DFSchema, ToDFSchema, substrait_datafusion_err};
+use datafusion::common::{
+    DFSchema, ToDFSchema, not_impl_datafusion_err, substrait_datafusion_err,
+};
 use datafusion::logical_expr::utils::conjunction;
 use datafusion::logical_expr::{EmptyRelation, Expr, TableScan, Values, lit};
 use datafusion::scalar::ScalarValue;
@@ -61,6 +63,12 @@ pub fn from_table_scan(
     producer: &mut impl SubstraitProducer,
     scan: &TableScan,
 ) -> datafusion::common::Result<Box<Rel>> {
+    let skip = scan.skip.map(i64::try_from).transpose().map_err(|_| {
+        not_impl_datafusion_err!("TableScan offset exceeds the supported Int64 range")
+    })?;
+    let fetch = scan.fetch.map(i64::try_from).transpose().map_err(|_| {
+        not_impl_datafusion_err!("TableScan fetch exceeds the supported Int64 range")
+    })?;
     let projection = scan.projection.as_ref().map(|p| {
         p.iter()
             .map(|i| StructItem {
@@ -116,15 +124,13 @@ pub fn from_table_scan(
         return Ok(read);
     }
     let empty_schema = Arc::new(DFSchema::empty());
-    let offset_mode = scan
-        .skip
-        .map(|skip| producer.handle_expr(&lit(skip as i64), &empty_schema))
+    let offset_mode = skip
+        .map(|skip| producer.handle_expr(&lit(skip), &empty_schema))
         .transpose()?
         .map(Box::new)
         .map(fetch_rel::OffsetMode::OffsetExpr);
-    let count_mode = scan
-        .fetch
-        .map(|fetch| producer.handle_expr(&lit(fetch as i64), &empty_schema))
+    let count_mode = fetch
+        .map(|fetch| producer.handle_expr(&lit(fetch), &empty_schema))
         .transpose()?
         .map(Box::new)
         .map(fetch_rel::CountMode::CountExpr);
